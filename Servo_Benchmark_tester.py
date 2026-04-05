@@ -101,4 +101,4 @@ def run_full_benchamrk():
 
 if __name__ == "__main__":
     intro() # Added this so your intro actually shows up!
-    run_full_benchmark()
+    run_full_benchamrk()
