@@ -30,35 +30,39 @@ Safety:
 Update the PORT variable in main.py to match your Device Manager (e.g., COM3 or /dev/ttyUSB0).
 
 
-# HOW TO USE
+Here is the finalized HOW TO USE and TROUBLESHOOTING sections, formatted in clean Markdown for your README.md.
+
+🛠 HOW TO USE
 1. Configuration
-Open Servo_Benchmark_tester.py and check the top of the script:
+Open Servo_Benchmark_tester.py in your text editor and check the top of the script:
 
-Hardware Mode: Change PORT to match your Device Manager (e.g., COM3 or /dev/ttyUSB0).
+Hardware Mode: Change PORT to match your Device Manager (e.g., COM3 on Windows or /dev/ttyUSB0 on Linux).
 
-Test Mode: Change PORT to "TEST". This lets you run the script without any hardware connected. It will skip the serial check and print the raw hex packets to your screen in BRIGHT RED so you can check the math.
+Test Mode: Change PORT to "TEST". This lets you run the script without any hardware connected. It will skip the serial check and print the raw hex packets to your screen in BRIGHT RED so you can verify the math and logic.
 
 2. Running the Script
-Run the program in your terminal:
+Open your terminal or command prompt in the project folder and run:
 
 Bash
 python Servo_Benchmark_tester.py
 3. Select Your Mode
-Once the intro screen clears, you will have two options:
+Once the intro screen clears and you press [ENTER], you will have two options:
 
-Option [1] Automatic Benchmark: The script will automatically test the servo's absolute minimum (0), absolute maximum (4095), and perform a "sweep-swoop" rapid response test before returning to neutral.
+Option [1] Automatic Benchmark: The script performs a "sanity check" sequence. It tests the absolute minimum (0), the absolute maximum (4095), and runs a "sweep-swoop" rapid response test before returning the servo to neutral.
 
-Option [2] Live/Manual Mode: * Type a raw number (0-4095) to move the servo to that specific register position.
+Option [2] Live/Manual Mode: * Raw: Type a number between 0-4095 to move to a specific register position.
 
-Type a degree followed by 'd' (e.g., 180d or 90d) to have the script automatically calculate the position.
+Degrees: Type a number followed by d (e.g., 180d or 90.5d) to move to a specific angle.
 
-Type exit to return to the main menu.
+Exit: Type exit to return to the main menu.
 
-TROUBLESHOOTING
-If you see the [GUARDRAIL] ERROR, check the following:
+⚠️ TROUBLESHOOTING
+If you see a [GUARDRAIL] ERROR, check the following common issues:
 
-Is the 12V power supply actually plugged in?
+Power: Is the 12V Power Supply actually plugged into the Driver Board? (USB alone won't move the servos).
 
-Is the jumper on the Waveshare board set to B?
+Jumper: Is the jumper on the Waveshare board set to Mode B (USB Mode)?
 
-Is another program (like Arduino IDE) using your COM port?
+Port Busy: Is another program (like Arduino IDE, Serial Monitor, or another Python instance) using your COM port?
+
+Drivers: If the COM port doesn't show up in your Device Manager, you may need to install the CH340/CP2102 drivers for the adapter board.
