@@ -3,102 +3,142 @@ import time
 import sys
 
 # config
-PORT = 'COM3'
+PORT = "TEST" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
 BAUD = 1000000
 ID = 1
 
-def send_packet(ser,servo_id, addr, value, speed=0):
-    # consructs and sends packet for servo
-    # addr 0x2A is the position
-    # addr 0x3E is the speed it moves
+# Color Constants
+R = "\033[91m"  # Red
+G = "\033[92m"  # Green
+Y = "\033[93m"  # Yellow
+C = "\033[96m"  # Cyan
+RESET = "\033[0m"
 
-    # using 'write position' command with speed and acceleration
-    # register 0x2A, 2 bytes for position and 2 bytes for speed
+def send_packet(ser, servo_id, addr, value, speed=0):
+    """
+    consructs and sends packet for servo
+    addr 0x2A is the position
+    addr 0x3E is the speed it moves
+    using 'write position' command with speed and acceleration
+    register 0x2A, 2 bytes for position and 2 bytes for speed
+    """
     length = 7
-    cmd= 0x03
+    cmd = 0x03
 
     # writing to position (aka 0x2A)
     packet = [0xFF, 0xFF, servo_id, length, cmd, addr]
-    packet.append(value & 0xFF) # pos low
-    packet.append((value >>8) & 0xFF) # pos high
+    packet.append(value & 0xFF)  # pos low
+    packet.append((value >> 8) & 0xFF)  # pos high
 
-    #checksum calc for error checking
+    # checksum calc for error checking
     checksum = ~(sum(packet[2:]) & 0xFF) & 0xFF
     packet.append(checksum)
 
     try:
-        ser.write(bytearray(packet))
+        if ser is None:
+            # ALL RED NOTIFICATION FOR TEST MODE
+            print(f"{R}[TEST MODE] Packet sent to ID {servo_id}: {packet}{RESET}")
+        else:
+            ser.write(bytearray(packet))
     except Exception as e:
-        print(f"Uh oh transmission error: {e} try turning on and off again and replugging the servos")
+        print(
+            f"{R}Uh oh transmission error: {e} try turning on and off again and replugging the servos{RESET}"
+        )
 
 
 def intro():
-    #intoduction screen
-    print("="*50)
+    # intoduction screen
+    print(f"{C}{'=' * 50}")
     print("sts3215 servo tester benchamark thingymagig")
-    print("="*50)
-    print(f"Target Servo ID: {ID}")
-    print(f"Connection Port: {PORT} @ {BAUD} bps")
-    print("-"*50)
-    print("SAFETY CHECKLIST:")
+    print(f"{'=' * 50}{RESET}")
+    print(f"Target Servo ID: {Y}{ID}{RESET}")
+    print(f"Connection Port: {Y}{PORT}{RESET} @ {BAUD} bps")
+    print("-" * 50)
+    print(f"{R}SAFETY CHECKLIST:{RESET}")
     print("1. 12V Power Supply connected to Driver Board?")
     print("2. Jumper set to 'B' (USB Mode)?")
     print("3. Servo horn clear of any obstructions?")
-    print("-"*50)
-    input("\n>>> PRESS [ENTER] TO COMMENCE TEST SEQUENCE <<<")
-    
-def run_full_benchamrk():
+    print("-" * 50)
+    input(f"\n{G}>>> PRESS [ENTER] TO COMMENCE TEST SEQUENCE <<<{RESET}")
+
+
+def run_full_benchmark():
     try:
-        # 1sec timeout so i don't waste 30 buckaroonies
-        ser = serial.Serial(PORT, BAUD, timeout=1)
-        print(f"starting full benchmark on {PORT} !!!!!!! ")
+        # TEST MODE 
+        if PORT == "TEST":
+            print(f"\n{R}*** IN TEST MODE NO HARDWARE REQ ***{RESET}")
+            ser = None
+        else:
+            # 1sec timeout so i don't waste 30 buckaroonies
+            ser = serial.Serial(PORT, BAUD, timeout=1)
 
-        # 1st test absoulute minimum 
-        print("1st test absoulute minimum (0)")
-        send_packet(ser,ID,0x2A, 0)
-        time.sleep(1.5) #allow it to move
+        choice = input(f"{C}Select mode [1] or [2]: {RESET}")
+        if choice == "1":
+            print(f"\n{G}starting full benchmark on {PORT} !!!!!!!{RESET} ")
 
+            # 1st test absoulute minimum
+            print("1st test absoulute minimum (0)")
+            send_packet(ser, ID, 0x2A, 0)
+            time.sleep(1.5)  # allow it to move
 
-        # 2nd testabsoulute max
-        print("2nd test absoulute max (4095)")
-        send_packet(ser,ID,0x2A, 4095)
-        time.sleep(2.5) #allow it to move (longest possible travel time)
+            # 2nd test absoulute max
+            print("2nd test absoulute max (4095)")
+            send_packet(ser, ID, 0x2A, 4095)
+            time.sleep(2.5)  # allow it to move (longest possible travel time)
 
+            # 3rd test rapid sweepswoop
+            print("3rd test rapid response to command test")
+            for _ in range(3):
+                send_packet(ser, ID, 0x2A, 2048)
+                time.sleep(0.8)
+                send_packet(ser, ID, 0x2A, 3000)
+                time.sleep(0.5)
 
-        # 3rd test rapid sweepswoop 
-        print("3rd test rapid response to command test")
-        send_packet(ser,ID,0x2A,2048)
-        time.sleep(0.8)
-        send_packet(ser,ID,0x2A,3000)
-        time.sleep(0.5)
-        send_packet(ser,ID,0x2A,2048)
-        time.sleep(0.8)
-        send_packet(ser,ID,0x2A,3000)
-        time.sleep(0.5)
-        send_packet(ser,ID,0x2A,2048)
-        time.sleep(0.8)
-        send_packet(ser,ID,0x2A,3000)
-        time.sleep(0.5)       
+            # 4th test return to home
+            print("4th test return to neutral (2048)")
+            send_packet(ser, ID, 0x2A, 2048)
+            time.sleep(1.0)
 
-        # 4th test return to home
-        print("4th test return to neutral (2048)")
-        send_packet(ser,ID,0x2A,2048)
-        time.sleep(1.0)
+            print(f"{G}Benchmark complete!!! :) operational{RESET}")
 
-        print("Benchmark complete!!! :) operational")
+        elif choice == "2":
+            print(f"\n {C}LIVE/MANUAL MODE: Type 2048 or 180d. type exit to end.{RESET}")
+            print(
+                f"\n {Y}[NUMBER BETWEEN 0-360]d{RESET} is degrees e.g 180d is 180 degrees"
+            )
+            print(
+                f"\n {Y}[NUMBER BETWEEN 0-4095]{RESET} is raw value e.g 2048 is 180 degrees"
+            )
+            while True:
+                cmd = input(f"{C}Move to: {RESET}").lower().strip()
+                if cmd == "exit":
+                    break
+                try:
+                    if cmd.endswith("d"):
+                        val = int((float(cmd[:-1]) / 360) * 4095)
+                    else:
+                        val = int(cmd)
+
+                    if 0 <= val <= 4095:
+                        send_packet(ser, ID, 0x2A, val)
+                    else:
+                        print(f"{R}Value must be between 0-4095 or 0d-360d{RESET}")
+                except ValueError:
+                    print(f"{R}Invalid input. Please enter a number or 'exit'.{RESET}")
 
     except serial.SerialException:
-        print("\n[GUARDRAIL] ERROR: COULD NOT OPEN SERVO PORT")
+        print(f"\n{R}[GUARDRAIL] ERROR: COULD NOT OPEN SERVO PORT{RESET}")
         print("common troubleshooting")
         print("is the servo plugged in")
         print("is jumper on B?")
         print("is another device (ie arduino) using this port (COM3) currently")
     except KeyboardInterrupt:
-        print("\n[GUARDRAIL] USER ABORT: Stopping test...")
+        print(f"\n{R}[GUARDRAIL] USER ABORT: Stopping test...{RESET}")
     except Exception as e:
-        print(f"\n[GUARDRAIL] UNKNOWN ERROR: {e}")
+        print(f"\n{R}[GUARDRAIL] UNKNOWN ERROR: {e}{RESET}")
         print("i don't know bro :skull:, this is beyond my skill")
 
+
 if __name__ == "__main__":
-    intro() # Added this so your intro actually shows up!
-    run_full_benchamrk()
+    intro()
+    run_full_benchmark()
