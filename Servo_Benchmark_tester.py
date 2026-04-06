@@ -1,6 +1,7 @@
 import serial
 import time
 import sys
+import os
 
 # config
 PORT = "TEST" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
@@ -13,6 +14,44 @@ G = "\033[92m"  # Green
 Y = "\033[93m"  # Yellow
 C = "\033[96m"  # Cyan
 RESET = "\033[0m"
+
+MACRO_LIST=[]
+
+def clear_consle():
+    #keeps the screen tidy for stats
+    os.system('cls' if os.name =='nt' else 'clear')
+
+def get_telementry(ser):
+    #feature 2 for stats of the temp and volatage in real time
+    if ser is None:
+        return f"{C}Temputure = --°C | Voltage = --V" "{R}YOU ARE IN TEST MODE THIS IS A SIMULATION {RESET}"
+
+    # READ command (0x02) for 2 bytes starting at 0x2C (Temp/Volt)
+    packet = [0xFF,0xFF,ID,0x04,0x02,0x2C,0x02]
+    checksum= ~(sum(packet[2:]) & 0xFF) & 0xFF
+    packet.append(checksum)
+
+    try:
+        ser.write(bytearray(packet))
+        time.sleep(0.02) # wait for servo to respond
+        response = ser.read(8)
+        if len(response)>= 8:
+            temp = response[5]
+            volt = response[6] / 10.0
+            t_color = R if temp > 50 else G
+            return f"{t_color}Temp: {temp}°C{RESET} | {G}Voltage: {volt}V{RESET}"
+    except:
+        pass
+    return f"{R}Failed to read telementry{RESET}"
+
+def draw_bar(val):
+    # Feature 4 live bar for position
+        bar_len = 20
+        filled=int((val/4095)*bar_len)
+        bar = "█"*filled + "-"* (bar_len - filled)
+        return f"{C}[{bar}] {val}/4095{RESET}"
+
+
 
 def send_packet(ser, servo_id, addr, value, speed=0):
     """
@@ -63,6 +102,7 @@ def intro():
 
 
 def run_full_benchmark():
+    global MACRO_LIST
     try:
         # TEST MODE 
         if PORT == "TEST":
@@ -70,73 +110,116 @@ def run_full_benchmark():
             ser = None
         else:
             # 1sec timeout so i don't waste 30 buckaroonies
-            ser = serial.Serial(PORT, BAUD, timeout=1)
+            ser = serial.Serial(PORT, BAUD, timeout=0.1)
+        
+        while True: # Added a loop so you don't have to restart script to pick new modes
+            clear_consle() # CHANGE: Clears screen when returning to menu
+            print(f"\n{C}--- MAIN MENU ---{RESET}")
+            print("1. Run Full Auto Benchmark")
+            print("2. Live/Manual Control (Records to Macro)")
+            print(f"3. Replay Recorded Macro ({len(MACRO_LIST)} steps)")
+            print("4. Clear Macro & Reset")
+            print("5. Exit")
 
-        choice = input(f"{C}Select mode [1] or [2]: {RESET}")
-        if choice == "1":
-            print(f"\n{G}starting full benchmark on {PORT} !!!!!!!{RESET} ")
+            choice = input(f"{C}Select mode [1-5]: {RESET}")
+            
+            if choice == "1":
+                clear_consle() # CHANGE: Clears screen before starting tests
+                print(f"\n{G}starting full benchmark on {PORT} !!!!!!!{RESET} ")
 
-            # 1st test absoulute minimum
-            print("1st test absoulute minimum (0)")
-            send_packet(ser, ID, 0x2A, 0)
-            time.sleep(1.5)  # allow it to move
+                # 1st test absoulute minimum
+                print("1st test absoulute minimum (0)")
+                send_packet(ser, ID, 0x2A, 0)
+                time.sleep(1.5)  # allow it to move
 
-            # 2nd test absoulute max
-            print("2nd test absoulute max (4095)")
-            send_packet(ser, ID, 0x2A, 4095)
-            time.sleep(2.5)  # allow it to move (longest possible travel time)
+                # 2nd test absoulute max
+                print("2nd test absoulute max (4095)")
+                send_packet(ser, ID, 0x2A, 4095)
+                time.sleep(2.5)  # allow it to move (longest possible travel time)
 
-            # 3rd test rapid sweepswoop
-            print("3rd test rapid response to command test")
-            for _ in range(3):
+                # 3rd test rapid sweepswoop
+                print("3rd test rapid response to command test")
+                for _ in range(3):
+                    send_packet(ser, ID, 0x2A, 2048)
+                    time.sleep(0.8)
+                    send_packet(ser, ID, 0x2A, 3000)
+                    time.sleep(0.5)
+
+                # 4th test return to home
+                print("4th test return to neutral (2048)")
                 send_packet(ser, ID, 0x2A, 2048)
-                time.sleep(0.8)
-                send_packet(ser, ID, 0x2A, 3000)
-                time.sleep(0.5)
+                time.sleep(1.0)
 
-            # 4th test return to home
-            print("4th test return to neutral (2048)")
-            send_packet(ser, ID, 0x2A, 2048)
-            time.sleep(1.0)
+                for move, label in [(0, "min"), (4095, "max"), (2048, "mid")]:
+                    print(f"Moving to {label}...")
+                    send_packet(ser, ID, 0x2A, move)
+                    print(get_telementry(ser))
+                    time.sleep(1.5)
+                input(f"\n{G}Benchmark complete! Press Enter to go back...{RESET}")
 
-            print(f"{G}Benchmark complete!!! :) operational{RESET}")
+            elif choice == "2":
+                while True:
+                    clear_consle() # CHANGE: Keeps telemetry and bar at the top of the screen
+                    print(f"\n {C}LIVE/MANUAL MODE: Type 2048 or 180d. type exit to end.{RESET}")
+                    print(f" {Y}[NUMBER]d{RESET} for degrees | {Y}[NUMBER]{RESET} for raw")
+                    print("-" * 30)
+                    
+                    stats = get_telementry(ser)
+                    print(f"STATUS: {stats}")
+                    
+                    # Show the bar for the last position moved to if available
+                    if MACRO_LIST:
+                        print(f"CURRENT POS: {draw_bar(MACRO_LIST[-1])}")
+                    
+                    cmd = input(f"\n{C}Move to >>{RESET} ").lower().strip()
+                    
+                    if cmd == "exit":
+                        break
+                    try:
+                        if cmd.endswith("d"):
+                            val = int((float(cmd[:-1]) / 360) * 4095)
+                        else:
+                            val = int(cmd)
 
-        elif choice == "2":
-            print(f"\n {C}LIVE/MANUAL MODE: Type 2048 or 180d. type exit to end.{RESET}")
-            print(
-                f"\n {Y}[NUMBER BETWEEN 0-360]d{RESET} is degrees e.g 180d is 180 degrees"
-            )
-            print(
-                f"\n {Y}[NUMBER BETWEEN 0-4095]{RESET} is raw value e.g 2048 is 180 degrees"
-            )
-            while True:
-                cmd = input(f"{C}Move to: {RESET}").lower().strip()
-                if cmd == "exit":
-                    break
-                try:
-                    if cmd.endswith("d"):
-                        val = int((float(cmd[:-1]) / 360) * 4095)
-                    else:
-                        val = int(cmd)
+                        if 0 <= val <= 4095:
+                            send_packet(ser, ID, 0x2A, val)
+                            MACRO_LIST.append(val)
+                        else:
+                            print(f"{R}Value must be between 0-4095 or 0d-360d{RESET}")
+                            time.sleep(1)
+                    except ValueError:
+                        print(f"{R}Invalid input.{RESET}")
+                        time.sleep(1)
 
-                    if 0 <= val <= 4095:
-                        send_packet(ser, ID, 0x2A, val)
-                    else:
-                        print(f"{R}Value must be between 0-4095 or 0d-360d{RESET}")
-                except ValueError:
-                    print(f"{R}Invalid input. Please enter a number or 'exit'.{RESET}")
+
+            elif choice == "3":
+                if not MACRO_LIST:
+                    input(f"{R} No moves recorded, press Enter...{RESET}")
+                else:
+                    clear_consle() # CHANGE: Tidy replay screen
+                    print(f"{G}Replaying {len(MACRO_LIST)} steps...{RESET}")
+                    for move in MACRO_LIST:
+                        send_packet(ser, ID, 0x2A, move)
+                        print(draw_bar(move))
+                        time.sleep(0.8)
+                    input(f"\n{G}Replay done! Press Enter...{RESET}")
+
+            elif choice == "4":
+                MACRO_LIST = []
+                print(f"{Y}Macro list cleared.{RESET}")            
+                time.sleep(1)
+
+            elif choice =="5":
+                exit()
 
     except serial.SerialException:
         print(f"\n{R}[GUARDRAIL] ERROR: COULD NOT OPEN SERVO PORT{RESET}")
-        print("common troubleshooting")
-        print("is the servo plugged in")
-        print("is jumper on B?")
-        print("is another device (ie arduino) using this port (COM3) currently")
+        input("Check connections and press Enter...")
     except KeyboardInterrupt:
         print(f"\n{R}[GUARDRAIL] USER ABORT: Stopping test...{RESET}")
     except Exception as e:
         print(f"\n{R}[GUARDRAIL] UNKNOWN ERROR: {e}{RESET}")
-        print("i don't know bro :skull:, this is beyond my skill")
+        input("Press Enter to continue...")
 
 
 if __name__ == "__main__":
