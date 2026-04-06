@@ -24,7 +24,7 @@ def clear_consle():
 def get_telementry(ser):
     #feature 2 for stats of the temp and volatage in real time
     if ser is None:
-        return f"{C}Temputure = --°C | Voltage = --V" "{R}YOU ARE IN TEST MODE THIS IS A SIMULATION {RESET}"
+        return f"{C}Temputure = --°C | Voltage = --V" f"{R} YOU ARE IN TEST MODE THIS IS A SIMULATION {RESET}"
 
     # READ command (0x02) for 2 bytes starting at 0x2C (Temp/Volt)
     packet = [0xFF,0xFF,ID,0x04,0x02,0x2C,0x02]
