@@ -11,7 +11,8 @@ I needed a way to bench mark my servos for my other projects to test if they eve
 
 ### YOU WILL NEED
 *STS3215* servos (obviously)
-**Wonrabai/Waveshare bus servo Adapter (A):** (Jumper set to **Mode B**) like this one https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/
+**Wonrabai/Waveshare bus servo Adapter (A):** (Jumper set to **Mode B**) like this one https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/ 
+(*now optional!* just enter test mode)
 * USB-C cable
 * 12V power supply (for the servo)
 
