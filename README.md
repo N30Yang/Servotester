@@ -4,7 +4,7 @@ Just another program to test servos if they work
 <img width="1153" height="915" alt="image" src="https://github.com/user-attachments/assets/67719df1-015d-4967-9954-34f3f6ba6614" />
 
 
-This Project is a dual purpose diognostic tool for testing sts3215 servos (also standard pwm servos [i think]).
+This Project is a multi purpose diognostic tool for testing sts3215 servos (also standard pwm servos [i think]).
 I needed a way to bench mark my servos for my other projects to test if they even work.
 
 ---
@@ -61,6 +61,10 @@ Run the script
     Degrees: Type a number followed by d (e.g., 180d or 90.5d) to move to a specific angle.
 
     Exit: Type exit to return to the main menu.
+
+* [3] Macro mode: it will copy all the instrucitons made in the live mode and replay them in the same order.
+
+* [4] Clear Macro & Reset: it will clear all the instrucitons made in the live mode and replay them in the same order.
 
 ---
 ---
