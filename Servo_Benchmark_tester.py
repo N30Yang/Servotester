@@ -22,27 +22,36 @@ def clear_consle():
     os.system('cls' if os.name =='nt' else 'clear')
 
 def get_telementry(ser):
-    #feature 2 for stats of the temp and volatage in real time
+    # feature 2 for stats of the temp and volatage in real time
     if ser is None:
-        return f"{C}Temputure = --°C | Voltage = --V" f"{R} YOU ARE IN TEST MODE THIS IS A SIMULATION {RESET}"
+        return f"{C}Temperature = --°C | Voltage = --V{RESET} {R}[SIMULATION]{RESET}"
 
     # READ command (0x02) for 2 bytes starting at 0x2C (Temp/Volt)
-    packet = [0xFF,0xFF,ID,0x04,0x02,0x2C,0x02]
-    checksum= ~(sum(packet[2:]) & 0xFF) & 0xFF
+    packet = [0xFF, 0xFF, ID, 0x04, 0x02, 0x2C, 0x02]
+    checksum = ~(sum(packet[2:]) & 0xFF) & 0xFF
     packet.append(checksum)
 
     try:
         ser.write(bytearray(packet))
-        time.sleep(0.02) # wait for servo to respond
+        time.sleep(0.02)  # wait for servo to respond
         response = ser.read(8)
-        if len(response)>= 8:
+        if len(response) >= 8:
             temp = response[5]
             volt = response[6] / 10.0
-            t_color = R if temp > 50 else G
-            return f"{t_color}Temp: {temp}°C{RESET} | {G}Voltage: {volt}V{RESET}"
-    except:
+            
+            # Thermal Logic
+            if temp > 50:
+                t_color = R
+                warning = f" {R}!!! CRITICAL OVERHEAT !!!{RESET}"
+            else:
+                t_color = G
+                warning = ""
+
+            return f"{t_color}Temp: {temp}°C{RESET} | {G}Voltage: {volt}V{RESET}{warning}"
+            
+    except Exception:
         pass
-    return f"{R}Failed to read telementry{RESET}"
+    return f"{R}Failed to read telemetry{RESET}"
 
 def draw_bar(val):
     # Feature 4 live bar for position
