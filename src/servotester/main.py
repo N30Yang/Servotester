@@ -4,7 +4,7 @@ import sys
 import os
 
 # config
-PORT = "TEST" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
+PORT = "COM3" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
 BAUD = 1000000
 ID = 1
 
