@@ -230,7 +230,9 @@ def run_full_benchmark():
         print(f"\n{R}[GUARDRAIL] UNKNOWN ERROR: {e}{RESET}")
         input("Press Enter to continue...")
 
-
-if __name__ == "__main__":
+def start_app():
     intro()
     run_full_benchmark()
+
+if __name__ == "__main__":
+    start_app()
