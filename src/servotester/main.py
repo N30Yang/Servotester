@@ -32,7 +32,7 @@ def start_app():
     print("2. Test mode (test logic and packets, with no servo)")
     choice=input("\n choose a mode [1] or [2]")
 
-    if choice == 2:
+    if choice == "2":
         PORT = "TEST"
         print(f"{G}Test mode selected{RESET}")
     else:
@@ -55,10 +55,10 @@ def start_app():
                 if val.isdigit():
                     PORT = ports[int(val)-1].device
                 else:
-                    PORT = ports[int(val)-1].device
+                    PORT = val.upper() # If they type 'com3', it becomes 'COM3'
             except (ValueError, IndexError):
                 PORT = ports[0].device
-                print(f"Invalid choice, selcting {PORT}")
+                print(f"Invalid choice, selecting {PORT}")
         print(f"\n--- TARGETING: {PORT} ---")
     run_full_benchmark()
 
