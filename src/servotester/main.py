@@ -4,7 +4,7 @@ import sys
 import os
 
 # config
-PORT = "TEST" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
+PORT = "COM3" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
 BAUD = 1000000
 ID = 1
 
@@ -235,4 +235,9 @@ def start_app():
     run_full_benchmark()
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     start_app()
+=======
+    intro()
+    run_full_benchmark()
+>>>>>>> df42a6e5c7a5a36d20af6c7b8ddc194ecd24bb91
