@@ -1,4 +1,4 @@
-# Servotester
+# Servotest
 Just another program to test servos if they work
 
 <img width="1153" height="915" alt="image" src="https://github.com/user-attachments/assets/67719df1-015d-4967-9954-34f3f6ba6614" />
