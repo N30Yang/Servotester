@@ -71,3 +71,6 @@ If you see a [GUARDRAIL] ERROR, check the following common issues:
 * Port Busy: Is another program (like Arduino IDE, Serial Monitor, or another Python instance) using your COM port?
 
 * Drivers: If the COM port doesn't show up in your Device Manager, you may need to install the CH340/CP2102 drivers for the adapter board.
+
+* If you (or a user) gets a "Permission Denied" error, they need to run one command to give themselves access to the "dialout" group:
+    Linux Fix: sudo usermod -a -G dialout $USER (Then log out and back in).

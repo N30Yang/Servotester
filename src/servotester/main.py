@@ -2,6 +2,7 @@ import serial
 import time
 import sys
 import os
+import serial.tools.list_ports
 
 # config
 PORT = "COM3" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
@@ -20,6 +21,46 @@ MACRO_LIST=[]
 def clear_consle():
     #keeps the screen tidy for stats
     os.system('cls' if os.name =='nt' else 'clear')
+
+
+def start_app():
+    intro()
+    global PORT
+
+    print("\n[Select mode]")
+    print("1. Physical hardware mode (servo is connected)")
+    print("2. Test mode (test logic and packets, with no servo)")
+    choice=input("\n choose a mode [1] or [2]")
+
+    if choice == 2:
+        PORT = "TEST"
+        print(f"{G}Test mode selected{RESET}")
+    else:
+        ports = sorted(serial.tools.list_ports.comports())
+
+        if not ports:
+            print("\n No serial devices found")
+            print("Check you usb cable, defulting to test mode")
+            PORT = "TEST"
+        
+        else:
+            print("\n[Detected devices:]")
+            for i, p in enumerate(ports):
+                # On Linux/Mac, p.device looks like /dev/ttyUSB0
+                # On Windows, p.device looks like COM3
+                print(f"{i + 1}. {p.device} ({p.description})")
+
+            try:
+                val = input(f"\nSelect port (1-{len(ports)}) or enter name: ").strip()
+                if val.isdigit():
+                    PORT = ports[int(val)-1].device
+                else:
+                    PORT = ports[int(val)-1].device
+            except (ValueError, IndexError):
+                PORT = ports[0].device
+                print(f"Invalid choice, selcting {PORT}")
+        print(f"\n--- TARGETING: {PORT} ---")
+    run_full_benchmark()
 
 def get_telementry(ser):
     # feature 2 for stats of the temp and volatage in real time
@@ -230,9 +271,6 @@ def run_full_benchmark():
         print(f"\n{R}[GUARDRAIL] UNKNOWN ERROR: {e}{RESET}")
         input("Press Enter to continue...")
 
-def start_app():
-    intro()
-    run_full_benchmark()
 
 if __name__ == "__main__":
     start_app()
