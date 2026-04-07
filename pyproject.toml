@@ -27,7 +27,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/N30Yang/Servotester/issues"
 
 [project.scripts]
-servotest = "servotester.main:run_full_benchmark"
+servotest = "servotester.main:start_app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/servotester"]
