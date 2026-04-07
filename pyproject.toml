@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "servotest"
-version = "0.1.6"
+version = "0.1.7"
 description = "A simple command line tool for testing and moving servos"
 authors = [
     {name="Neo Yang", email="neoxyyang11@outlook.com"}
@@ -24,8 +24,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/N30Yang/Servotester"
-"Bug Tracker" = "https://github.com/N30Yang/Servotester/issues"
+"Homepage" = "https://github.com/N30Yang/Servotest"
+"Bug Tracker" = "https://github.com/N30Yang/Servotest/issues"
 
 [project.scripts]
 servotest = "servotest.main:start_app"
