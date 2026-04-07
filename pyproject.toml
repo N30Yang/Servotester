@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "servo_tester"
+version = "0.1.4"
+description = "A simple command line tool for testing and moving servos"
+authors = [
+    {name="Neo Yang", email="neoxyyang11@outlook.com"}
+]
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: Public Domain",
+    "Operating System :: OS Independent",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+]
+
+dependencies = [
+    "pyserial>=3.5"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/N30Yang/Servotester"
+"Bug Tracker" = "https://github.com/N30Yang/Servotester/issues"
+
+[project.scripts]
+servotest = "servotester.main:run_full_benchmark"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/servotester"]
