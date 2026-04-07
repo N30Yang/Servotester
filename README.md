@@ -25,16 +25,10 @@ Safety:
 ---
 
 ##  Installation
-1. Clone this repo:
-   ```
-   bash
-   git clone [https://github.com/your-username/sts3215-benchmark.git](https://github.com/your-username/sts3215-benchmark.git)
-   ```
-2. Install dependencies:
-    ```
-    bash
-    pip install pyserial
-    ```
+## Installation
+```bash
+pip install servo_tester
+```
 Update the PORT variable in main.py to match your Device Manager (e.g., COM3 or /dev/ttyUSB0).
 
 
