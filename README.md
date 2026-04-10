@@ -6,12 +6,13 @@ Just another program to test servos if they work
 
 This Project is a multi purpose diognostic tool for testing sts3215 servos (also standard pwm servos [i think]).
 I needed a way to bench mark my servos for my other projects to test if they even work.
+I created this because most other servo testing tools require a raspberry pi to setup and my one only needs a bus servo adapter to work.
 
 ---
 
 ### YOU WILL NEED
 *STS3215* servos (obviously)
-**Wonrabai/Waveshare bus servo Adapter (A):** (Jumper set to **Mode B**) like this one https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/ 
+**Waveshare bus servo Adapter (A):** (Jumper set to **Mode B**) like this one https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/ 
 (*now optional!* just enter test mode)
 * USB-C cable
 * 12V power supply (for the servo)
