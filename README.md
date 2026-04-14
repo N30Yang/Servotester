@@ -28,7 +28,7 @@ Safety:
 ##  Installation
 ## Installation
 ```bash
-pip install servo_tester
+pip install servotest
 servotest
 ```
 Update the PORT variable in main.py to match your Device Manager (e.g., COM3 or /dev/ttyUSB0).
