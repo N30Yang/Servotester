@@ -6,7 +6,6 @@ A simple diagnostic + benchmarking tool for STS3215 serial servos
 
 ---
 
-<<<<<<< HEAD
 ## Overview
 
 Servotest is a lightweight CLI tool for testing **Feetech STS3215 bus servos**.
@@ -30,20 +29,6 @@ It also includes a **test mode**, so you can validate logic without hardware.
 * Test mode (no hardware required)
 * Robust serial handling (stable at 1 Mbps)
 * Built-in guardrails for common failures
-=======
-This Project is a multi purpose diognostic tool for testing sts3215 servos (also standard pwm servos [i think]).
-I needed a way to bench mark my servos for my other projects to test if they even work.
-I created this because most other servo testing tools require a raspberry pi to setup and my one only needs a bus servo adapter to work.
-
----
-
-### YOU WILL NEED
-*STS3215* servos (obviously)
-**Waveshare bus servo Adapter (A):** (Jumper set to **Mode B**) like this one https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/ 
-(*now optional!* just enter test mode)
-* USB-C cable
-* 12V power supply (for the servo)
->>>>>>> 812681dce64b96292196b56b641844a6a5b79a2b
 
 ---
 
