@@ -1,3 +1,4 @@
+from re import DEBUG
 import serial
 import time
 import sys
@@ -8,6 +9,7 @@ import serial.tools.list_ports
 PORT = "COM3" # !!!!! CHANGE TO "TEST" (FULL CAPS NO QUOTES) FOR TEST MODE !!!!!
 BAUD = 1000000
 ID = 1
+DEBUG = False
 
 # Color Constants
 R = "\033[91m"  # Red
@@ -62,37 +64,55 @@ def start_app():
         print(f"\n--- TARGETING: {PORT} ---")
     run_full_benchmark()
 
-def get_telementry(ser):
-    # feature 2 for stats of the temp and volatage in real time
-    if ser is None:
-        return f"{C}Temperature = --°C | Voltage = --V{RESET} {R}[SIMULATION]{RESET}"
-
-    # READ command (0x02) for 2 bytes starting at 0x2C (Temp/Volt)
-    packet = [0xFF, 0xFF, ID, 0x04, 0x02, 0x2C, 0x02]
+def read_register(ser, addr, length, servo_id):
+    """Robust read for STS protocol"""
+    packet = [0xFF, 0xFF, servo_id, 0x04, 0x02, addr, length]
     checksum = ~(sum(packet[2:]) & 0xFF) & 0xFF
     packet.append(checksum)
 
-    try:
-        ser.write(bytearray(packet))
-        time.sleep(0.02)  # wait for servo to respond
-        response = ser.read(8)
-        if len(response) >= 8:
-            temp = response[5]
-            volt = response[6] / 10.0
-            
-            # Thermal Logic
-            if temp > 50:
-                t_color = R
-                warning = f" {R}!!! CRITICAL OVERHEAT !!!{RESET}"
-            else:
-                t_color = G
-                warning = ""
+    ser.reset_input_buffer()
+    ser.write(bytearray(packet))
+    ser.flush()
 
-            return f"{t_color}Temp: {temp}°C{RESET} | {G}Voltage: {volt}V{RESET}{warning}"
-            
-    except Exception:
-        pass
-    return f"{R}Failed to read telemetry{RESET}"
+    # Wait for full response
+    expected_len = 6 + length
+    start_time = time.time()
+    buffer = bytearray()
+
+    while len(buffer) < expected_len:
+        if ser.in_waiting:
+            buffer.extend(ser.read(ser.in_waiting))
+        if time.time() - start_time > 0.05:  # 50ms timeout
+            break
+
+    return bytes(buffer)
+
+def get_telementry(ser, servo_id=1):
+    if ser is None or not getattr(ser, 'is_open', False):
+        return f"{C}Volt: --V{RESET} {R}[SIMULATION]{RESET}"
+    
+    try:
+        resp_v = read_register(ser, 0x3C, 1, servo_id)
+
+        if not resp_v or len(resp_v) < 7:
+            return f"{R}Telemetry Error (Short Read){RESET}"
+
+        # Validate header
+        if resp_v[0] != 0xFF or resp_v[1] != 0xFF:
+            return f"{R}Bad Packet{RESET}"
+
+        # Error byte
+        if resp_v[4] != 0:
+            return f"{R}Servo Error: {resp_v[4]}{RESET}"
+
+        raw_volt = resp_v[5]
+        volt = raw_volt / 10.0
+
+        return f"{G}Voltage: {volt:.1f}V{RESET}"
+
+    except Exception as e:
+        return f"{R}Read Error: {e}{RESET}"
+
 
 def draw_bar(val):
     # Feature 4 live bar for position
@@ -103,37 +123,42 @@ def draw_bar(val):
 
 
 
-def send_packet(ser, servo_id, addr, value, speed=0):
-    """
+
+"""
     consructs and sends packet for servo
     addr 0x2A is the position
     addr 0x3E is the speed it moves
     using 'write position' command with speed and acceleration
     register 0x2A, 2 bytes for position and 2 bytes for speed
-    """
-    length = 7
-    cmd = 0x03
+"""
+def send_packet(ser, servo_id, addr, value, speed=0):
+    # Length = Instruction(1) + Address(1) + Data(2) + Checksum(1) = 5
+    length = 5 
+    cmd = 0x03 
 
-    # writing to position (aka 0x2A)
+    # Construct packet
     packet = [0xFF, 0xFF, servo_id, length, cmd, addr]
-    packet.append(value & 0xFF)  # pos low
-    packet.append((value >> 8) & 0xFF)  # pos high
+    packet.append(value & 0xFF)
+    packet.append((value >> 8) & 0xFF)
 
-    # checksum calc for error checking
+    # Checksum calculation (usually includes everything after ID)
     checksum = ~(sum(packet[2:]) & 0xFF) & 0xFF
     packet.append(checksum)
 
+    # --- DEBUGGING TOOL ---
+    # Print the packet to see exactly what is being sent
+    if DEBUG:
+        print(f"DEBUG: Sending bytes: {[hex(b) for b in packet]}")
+    # ----------------------
+
     try:
         if ser is None:
-            # ALL RED NOTIFICATION FOR TEST MODE
-            print(f"{R}[TEST MODE] Packet sent to ID {servo_id}: {packet}{RESET}")
+            print(f"{R}[TEST MODE] Packet sent: {packet}{RESET}")
         else:
             ser.write(bytearray(packet))
+            ser.flush() # Ensure the bytes are actually pushed out of the buffer
     except Exception as e:
-        print(
-            f"{R}Uh oh transmission error: {e} try turning on and off again and replugging the servos{RESET}"
-        )
-
+        print(f"{R}Transmission error: {e}{RESET}")
 
 def intro():
     # intoduction screen

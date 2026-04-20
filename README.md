@@ -1,76 +1,292 @@
 # Servotest
-Just another program to test servos if they work
+
+A simple diagnostic + benchmarking tool for STS3215 serial servos
 
 <img width="1153" height="915" alt="image" src="https://github.com/user-attachments/assets/67719df1-015d-4967-9954-34f3f6ba6614" />
 
+---
 
-This Project is a multi purpose diognostic tool for testing sts3215 servos (also standard pwm servos [i think]).
-I needed a way to bench mark my servos for my other projects to test if they even work.
+## Overview
+
+Servotest is a lightweight CLI tool for testing **Feetech STS3215 bus servos**.
+
+It helps you quickly answer:
+
+* Is the servo alive?
+* Is communication working?
+* Does it move correctly across its full range?
+
+It also includes a **test mode**, so you can validate logic without hardware.
 
 ---
 
-### YOU WILL NEED
-*STS3215* servos (obviously)
-**Wonrabai/Waveshare bus servo Adapter (A):** (Jumper set to **Mode B**) like this one https://www.amazon.com/Waveshare-Integrates-Control-Circuit-Supports/dp/B0CTMM4LWK/ 
-(*now optional!* just enter test mode)
-* USB-C cable
-* 12V power supply (for the servo)
+## Features
+
+* Full automatic benchmark sequence
+* Live manual control (raw + degrees input)
+* Macro recording and playback
+* Real-time **voltage telemetry**
+* Test mode (no hardware required)
+* Robust serial handling (stable at 1 Mbps)
+* Built-in guardrails for common failures
 
 ---
 
-Safety: 
-    The servos are quite storong so please remove any obstructions and it has safety features like overcurrent protection and overtemperature protection *BUT* it can still break if you abuse it enough. 
-    **Guardrails:** Integrated error handling for disconnected hardware or serial collisions.
+## Requirements
+
+### Hardware
+
+* STS3215 servo (7.4V or 12V)
+* Bus servo adapter (Waveshare / Wonrabai recommended)
+* USB cable
+* External power supply (5v for 7.4v and 12v for 12v)
+
+> ⚠️ USB alone will NOT power the servo
 
 ---
 
-##  Installation
-## Installation
+## Setup
+
+Install:
+
 ```bash
 pip install servo_tester
 servotest
 ```
-Update the PORT variable in main.py to match your Device Manager (e.g., COM3 or /dev/ttyUSB0).
+
+The setup is like this:
+
+```
+                     ┌──────────────────────┐
+                     │      COMPUTER        │
+                     │  (Python Script)     │
+                     └─────────┬────────────┘
+                               │ USB-C
+                               │
+                               ▼
+                  ┌──────────────────────────┐
+                  │  BUS SERVO CONTROLLER    │
+                  │ (Waveshare / Wonrabai)   │
+                  │                          │
+                  │   [USB / UART Interface] │
+                  │          │               │
+                  │          │ TTL Serial    │
+                  │          ▼               │
+                  │     Servo Bus Port       │
+                  └───────▲───────────┬──────┘
+                          │           │
+            External      │           │ Servo Cable
+            Power Supply              │ (3-wire TTL)
+          (7.4V / 12V)                │
+                                      ▼
+                 ┌────────────────────────┐
+                 │       STS3215 SERVO    │
+                 │                        │
+                 │   VCC  ───────────────┘
+                 │   GND  ───────────────┘
+                 │   DATA ◄───────────────┘
+                 └────────────────────────┘
+```
 
 ---
 
-## Configuration
-Open Servo_Benchmark_tester.py in your text editor and check the top of the script:
+## Signal Breakdown
 
-* Hardware Mode: Change PORT to match your Device Manager (e.g., COM3 on Windows or /dev/ttyUSB0 on Linux).
+```
+USB-C → Controller
+    - Power (logic side)
+    - Serial communication (via USB-UART chip)
 
-* Test Mode: Change PORT to "TEST". This lets you run the script without any hardware connected. It will skip the serial check and print the raw hex packets to your screen in BRIGHT RED so you can verify the math and logic.
+External PSU → Controller
+    - Main power for servo (IMPORTANT)
+    - Typically 5V or 12V
+
+Controller → Servo
+    - VCC (power)
+    - GND
+    - DATA (half-duplex serial bus)
+```
+
+---
+
+## Important Notes
+
+* ⚠️ The servo is **NOT powered by USB**
+* ⚠️ Always connect **external power to the controller**
+* ⚠️ Set jumper to:
+
+  ```
+  Mode B (USB Mode)
+  ```
+* ✔ Communication is:
+
+  ```
+  1 Mbps TTL serial (half-duplex)
+  ```
 
 ---
 
-## Select Your Mode
-Run the script
+## Mental Model
 
-* Option [1] Automatic Benchmark: The script performs a "sanity check" sequence. It tests the absolute minimum (0), the absolute maximum (4095), and runs a "sweep-swoop" rapid response test before returning the servo to neutral.
-
-* Option [2] Live/Manual Mode: * Raw: Type a number between 0-4095 to move to a specific register position.
-
-    Degrees: Type a number followed by d (e.g., 180d or 90.5d) to move to a specific angle.
-
-    Exit: Type exit to return to the main menu.
-
-* [3] Macro mode: it will copy all the instrucitons made in the live mode and replay them in the same order.
-
-* [4] Clear Macro & Reset: it will clear all the instrucitons made in the live mode and replay them in the same order.
-
----
+```
+[Your Code] → USB → [Controller] → Serial Bus → [Servo]
+                          ↑
+                    External Power
+```
 ---
 
-# TROUBLESHOOTING
-If you see a [GUARDRAIL] ERROR, check the following common issues:
+## Modes
 
-* Power: Is the 12V Power Supply actually plugged into the Driver Board? (USB alone won't move the servos).
+### [1] Automatic Benchmark
 
-* Jumper: Is the jumper on the Waveshare board set to Mode B (USB Mode)?
+Runs a full diagnostic sequence:
 
-* Port Busy: Is another program (like Arduino IDE, Serial Monitor, or another Python instance) using your COM port?
+* Move to minimum (0)
+* Move to maximum (4095)
+* Rapid sweep test
+* Return to neutral
 
-* Drivers: If the COM port doesn't show up in your Device Manager, you may need to install the CH340/CP2102 drivers for the adapter board.
+Also prints **voltage during operation**.
 
-* If you (or a user) gets a "Permission Denied" error, they need to run one command to give themselves access to the "dialout" group:
-    Linux Fix: sudo usermod -a -G dialout $USER (Then log out and back in).
+---
+
+### [2] Live / Manual Mode
+
+Control the servo interactively:
+
+**Raw position**
+
+```
+2048
+```
+
+**Degrees**
+
+```
+180d
+90.5d
+```
+
+**Exit**
+
+```
+exit
+```
+
+Displays:
+
+* Live voltage
+* Position bar
+
+---
+
+### [3] Macro Replay
+
+Replays movements recorded in Live Mode.
+
+---
+
+### [4] Clear Macro
+
+Clears recorded steps.
+
+---
+
+## Telemetry
+
+Currently supported:
+
+### Voltage
+
+* Read directly from servo register
+* Updated in real time
+
+Example:
+
+```
+Voltage: 12.1V
+```
+
+---
+
+### Temperature (Removed)
+
+Temperature reporting has been intentionally removed.
+
+Reason:
+
+* Some STS3215 firmware variants return constant `0`
+* Others do not expose temperature over serial
+* Register mapping is inconsistent across batches
+
+To avoid misleading data, it is not included.
+
+---
+
+## Troubleshooting
+
+### Servo not moving
+
+* Check external power supply
+* Confirm correct voltage (7.4V / 12V)
+
+---
+
+### No serial ports found
+
+* Check USB cable
+* Install CH340 / CP2102 drivers
+
+---
+
+### Port busy error
+
+Close other programs using the port:
+
+* Arduino IDE
+* Serial Monitor
+* Other scripts
+
+---
+
+### Permission denied (Linux)
+
+```bash
+sudo usermod -a -G dialout $USER
+```
+
+Then log out and back in.
+
+---
+
+### Getting weird or unstable readings
+
+* Ensure correct baud rate (**1,000,000**)
+* Check wiring (TX/RX swapped is common)
+* Verify adapter is in **Mode B (USB mode)**
+
+---
+
+## Notes
+
+* Protocol: Feetech STS serial protocol
+* Baud rate: **1 Mbps**
+* Position range: **0–4095**
+* Telemetry: voltage only
+
+---
+
+## Future Improvements
+
+* Position feedback (readback)
+* Load / current monitoring
+* Multi-servo support
+* Optional GUI
+
+---
+
+## Why this exists
+
+Because debugging servos shouldn’t take longer than building the robot.
+
+---
