@@ -51,7 +51,7 @@ Install:
 
 ```bash
 pip install servotest
-servotest
+python -m servotest
 ```
 
 The setup is like this:
