@@ -18,6 +18,10 @@ It helps you quickly answer:
 
 It also includes a **test mode**, so you can validate logic without hardware.
 
+Video:
+
+[![watch video](https://img.youtube.com/vi/P4e5pgoouJE/0.jpg)](https://www.youtube.com/watch?v=P4e5pgoouJE)
+
 ---
 
 ## Features
